@@ -1,4 +1,5 @@
 import threading
+import itertools
 
 class ClinicDatabase:
     _instance = None
@@ -13,8 +14,9 @@ class ClinicDatabase:
 
     def _initialize(self):
         self._owners = {}
-        self._pets = []
+        self._pets = {}
         self._appointments = {}
+        self._pet_counter = itertools.count(1)
 
     @classmethod
     def get_instance(cls):
@@ -38,10 +40,13 @@ class ClinicDatabase:
     def get_owners(self):
         return self._owners
 
+    def generate_pet_id(self):
+        return f"PET-{next(self._pet_counter):04d}"
+
     def add_pet(self, pet):
         if pet.owner_id not in self._owners:
             raise KeyError(f"Cannot add pet: Owner ID '{pet.owner_id}' does not exist.")
-        self._pets.append(pet)
+        self._pets[pet.pet_id] = pet
 
     def get_pets(self):
         return self._pets
