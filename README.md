@@ -37,7 +37,7 @@
 <tr><td><b>Laboratory Exercise</b></td><td>Laboratory Report 4 — Design Patterns and Unit Testing</td></tr>
 <tr><td><b>Program</b></td><td>BS Computer Engineering</td></tr>
 <tr><td><b>Institution</b></td><td>Mapúa University</td></tr>
-<tr><td><b>Collaborators</b></td><td>Edmarc Justin C. Oabel (Person A) · Jabez Molar (Person B)</td></tr>
+<tr><td><b>Collaborators</b></td><td>Edmarc Justin C. Oabel · Jabez Molar </td></tr>
 </table>
 
 ---
