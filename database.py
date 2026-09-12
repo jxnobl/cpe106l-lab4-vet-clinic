@@ -16,7 +16,9 @@ class ClinicDatabase:
         self._owners = {}
         self._pets = {}
         self._appointments = {}
+        self._owner_counter = itertools.count(1)
         self._pet_counter = itertools.count(1)
+        self._apt_counter = itertools.count(1)
 
     @classmethod
     def get_instance(cls):
@@ -29,29 +31,32 @@ class ClinicDatabase:
         with cls._lock:
             cls._instance = None
 
-    def register_owner(self, owner_id, name, contact):
-        clean_id = str(owner_id).strip()
-        clean_name = str(name).strip()
-        clean_contact = str(contact).strip()
-
-        if not clean_id or not clean_name or not clean_contact:
-            raise ValueError("Owner ID, Name, and Contact Number cannot be empty.")
-
-        if clean_id in self._owners:
-            raise ValueError(f"Owner ID '{clean_id}' already exists.")
-
-        self._owners[clean_id] = {
-            "owner_id": clean_id,
-            "name": clean_name,
-            "contact": clean_contact
-        }
-        return self._owners[clean_id]
-
-    def get_owners(self):
-        return self._owners
+    def generate_owner_id(self):
+        return f"OWN-{next(self._owner_counter):04d}"
 
     def generate_pet_id(self):
         return f"PET-{next(self._pet_counter):04d}"
+
+    def generate_appointment_id(self):
+        return f"APT-{next(self._apt_counter):04d}"
+
+    def register_owner(self, name, contact):
+        clean_name = str(name).strip()
+        clean_contact = str(contact).strip()
+
+        if not clean_name or not clean_contact:
+            raise ValueError("Owner Name and Contact Number cannot be empty.")
+
+        owner_id = self.generate_owner_id()
+        self._owners[owner_id] = {
+            "owner_id": owner_id,
+            "name": clean_name,
+            "contact": clean_contact
+        }
+        return owner_id
+
+    def get_owners(self):
+        return self._owners
 
     def add_pet(self, pet):
         clean_owner_id = str(pet.owner_id).strip()
@@ -62,22 +67,18 @@ class ClinicDatabase:
     def get_pets(self):
         return self._pets
 
-    def schedule_appointment(self, appointment_id, pet_name):
-        clean_apt_id = str(appointment_id).strip()
+    def schedule_appointment(self, pet_name):
         clean_pet_name = str(pet_name).strip()
+        if not clean_pet_name:
+            raise ValueError("Pet Name cannot be empty.")
 
-        if not clean_apt_id or not clean_pet_name:
-            raise ValueError("Appointment ID and Pet Name cannot be empty.")
-
-        if clean_apt_id in self._appointments:
-            raise ValueError(f"Appointment ID '{clean_apt_id}' already exists.")
-
-        self._appointments[clean_apt_id] = {
-            "appointment_id": clean_apt_id,
+        apt_id = self.generate_appointment_id()
+        self._appointments[apt_id] = {
+            "appointment_id": apt_id,
             "pet_name": clean_pet_name,
             "status": "Scheduled"
         }
-        return self._appointments[clean_apt_id]
+        return apt_id
 
     def update_appointment_status(self, appointment_id, status):
         clean_apt_id = str(appointment_id).strip()
@@ -102,4 +103,6 @@ class ClinicDatabase:
         self._owners.clear()
         self._pets.clear()
         self._appointments.clear()
+        self._owner_counter = itertools.count(1)
         self._pet_counter = itertools.count(1)
+        self._apt_counter = itertools.count(1)
