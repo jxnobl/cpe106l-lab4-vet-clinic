@@ -1,9 +1,13 @@
 import threading
 import itertools
+import json
+import os
+from pet_factory import PetFactory
 
 class ClinicDatabase:
     _instance = None
     _lock = threading.Lock()
+    _storage_file = "clinic_data.json"
 
     def __new__(cls):
         with cls._lock:
@@ -19,6 +23,7 @@ class ClinicDatabase:
         self._owner_counter = itertools.count(1)
         self._pet_counter = itertools.count(1)
         self._apt_counter = itertools.count(1)
+        self._load_from_disk()
 
     @classmethod
     def get_instance(cls):
@@ -30,6 +35,65 @@ class ClinicDatabase:
     def reset_instance(cls):
         with cls._lock:
             cls._instance = None
+
+    def _save_to_disk(self):
+        serialized_pets = {}
+        for pid, pet in self._pets.items():
+            serialized_pets[pid] = {
+                "pet_id": pet.pet_id,
+                "pet_type": pet.pet_type,
+                "name": pet.name,
+                "owner_id": pet.owner_id
+            }
+
+        data = {
+            "owners": self._owners,
+            "pets": serialized_pets,
+            "appointments": self._appointments
+        }
+        with open(self._storage_file, "w") as f:
+            json.dump(data, f, indent=4)
+
+    def _load_from_disk(self):
+        if not os.path.exists(self._storage_file):
+            return
+
+        try:
+            with open(self._storage_file, "r") as f:
+                data = json.load(f)
+
+            self._owners = data.get("owners", {})
+            self._appointments = data.get("appointments", {})
+
+            # Reconstruct pet objects using PetFactory
+            raw_pets = data.get("pets", {})
+            for pid, pinfo in raw_pets.items():
+                pet_obj = PetFactory.create_pet(
+                    pinfo["pet_id"],
+                    pinfo["pet_type"],
+                    pinfo["name"],
+                    pinfo["owner_id"]
+                )
+                self._pets[pid] = pet_obj
+
+            # Re-sync auto-increment counters to prevent ID collisions
+            self._sync_counters()
+
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    def _sync_counters(self):
+        owner_ids = [int(k.split("-")[1]) for k in self._owners.keys() if k.startswith("OWN-")]
+        max_owner = max(owner_ids, default=0)
+        self._owner_counter = itertools.count(max_owner + 1)
+
+        pet_ids = [int(k.split("-")[1]) for k in self._pets.keys() if k.startswith("PET-")]
+        max_pet = max(pet_ids, default=0)
+        self._pet_counter = itertools.count(max_pet + 1)
+
+        apt_ids = [int(k.split("-")[1]) for k in self._appointments.keys() if k.startswith("APT-")]
+        max_apt = max(apt_ids, default=0)
+        self._apt_counter = itertools.count(max_apt + 1)
 
     def generate_owner_id(self):
         return f"OWN-{next(self._owner_counter):04d}"
@@ -53,6 +117,7 @@ class ClinicDatabase:
             "name": clean_name,
             "contact": clean_contact
         }
+        self._save_to_disk()
         return owner_id
 
     def get_owners(self):
@@ -63,6 +128,7 @@ class ClinicDatabase:
         if clean_owner_id not in self._owners:
             raise KeyError(f"Cannot add pet: Owner ID '{clean_owner_id}' does not exist.")
         self._pets[pet.pet_id] = pet
+        self._save_to_disk()
 
     def get_pets(self):
         return self._pets
@@ -78,6 +144,7 @@ class ClinicDatabase:
             "pet_name": clean_pet_name,
             "status": "Scheduled"
         }
+        self._save_to_disk()
         return apt_id
 
     def update_appointment_status(self, appointment_id, status):
@@ -90,6 +157,7 @@ class ClinicDatabase:
 
         if clean_apt_id in self._appointments:
             self._appointments[clean_apt_id]["status"] = formatted_status
+            self._save_to_disk()
             return True
         return False
 
@@ -106,3 +174,5 @@ class ClinicDatabase:
         self._owner_counter = itertools.count(1)
         self._pet_counter = itertools.count(1)
         self._apt_counter = itertools.count(1)
+        if os.path.exists(self._storage_file):
+            os.remove(self._storage_file)
