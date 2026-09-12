@@ -2,11 +2,16 @@
     "owners": {
         "OWN-0001": {
             "owner_id": "OWN-0001",
-            "name": "Maria Dela Cruz",
-            "contact": "09180000000"
+            "name": "Jabez Molar",
+            "contact": "09764079752"
         },
         "OWN-0002": {
             "owner_id": "OWN-0002",
+            "name": "Maria Dela Cruz",
+            "contact": "09180000000"
+        },
+        "OWN-0003": {
+            "owner_id": "OWN-0003",
             "name": "Juan Dela Cruz",
             "contact": "09170000000"
         }
@@ -16,7 +21,7 @@
             "pet_id": "PET-0001",
             "pet_type": "Dog",
             "name": "Bantay",
-            "owner_id": "OWN-0001"
+            "owner_id": "OWN-0002"
         }
     },
     "appointments": {
