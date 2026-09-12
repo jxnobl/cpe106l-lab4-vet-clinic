@@ -1,0 +1,34 @@
+{
+    "owners": {
+        "OWN-0001": {
+            "owner_id": "OWN-0001",
+            "name": "Maria Dela Cruz",
+            "contact": "09180000000"
+        },
+        "OWN-0002": {
+            "owner_id": "OWN-0002",
+            "name": "Juan Dela Cruz",
+            "contact": "09170000000"
+        }
+    },
+    "pets": {
+        "PET-0001": {
+            "pet_id": "PET-0001",
+            "pet_type": "Dog",
+            "name": "Bantay",
+            "owner_id": "OWN-0001"
+        }
+    },
+    "appointments": {
+        "APT-0001": {
+            "appointment_id": "APT-0001",
+            "pet_name": "Bantay",
+            "status": "Cancelled"
+        },
+        "APT-0002": {
+            "appointment_id": "APT-0002",
+            "pet_name": "Bantay",
+            "status": "Scheduled"
+        }
+    }
+}
