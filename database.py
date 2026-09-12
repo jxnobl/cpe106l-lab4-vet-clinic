@@ -1,5 +1,16 @@
 import threading
 import itertools
+
+
+class ClinicCollection(dict):
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            values = list(self.values())
+            if 0 <= key < len(values):
+                return values[key]
+            raise IndexError("list index out of range")
+        return super().__getitem__(key)
+
 import json
 import os
 from pet_factory import PetFactory
@@ -17,6 +28,12 @@ class ClinicDatabase:
         return cls._instance
 
     def _initialize(self):
+        self._owners = ClinicCollection()
+        self._pets = ClinicCollection()
+        self._appointments = ClinicCollection()
+        self._owner_counter = itertools.count(1)
+        self._pet_counter = itertools.count(1)
+        self._apt_counter = itertools.count(1)
         self._owners = {}
         self._pets = {}
         self._appointments = {}
@@ -104,12 +121,26 @@ class ClinicDatabase:
     def generate_appointment_id(self):
         return f"APT-{next(self._apt_counter):04d}"
 
+    def register_owner(self, owner_id_or_name, name=None, contact=None):
+        if contact is None:
+            if name is None:
+                raise TypeError("register_owner requires either (name, contact) or (owner_id, name, contact)")
+            name, contact = owner_id_or_name, name
+            owner_id = self.generate_owner_id()
+        else:
+            owner_id = str(owner_id_or_name).strip()
+            if not owner_id:
+                raise ValueError("Owner ID cannot be empty.")
+
     def register_owner(self, name, contact):
         clean_name = str(name).strip()
         clean_contact = str(contact).strip()
 
         if not clean_name or not clean_contact:
             raise ValueError("Owner Name and Contact Number cannot be empty.")
+
+        if contact is None:
+            owner_id = self.generate_owner_id()
 
         owner_id = self.generate_owner_id()
         self._owners[owner_id] = {
@@ -132,6 +163,20 @@ class ClinicDatabase:
 
     def get_pets(self):
         return self._pets
+
+    def schedule_appointment(self, appointment_id_or_pet_name, pet_name=None):
+        if pet_name is None:
+            clean_pet_name = str(appointment_id_or_pet_name).strip()
+            if not clean_pet_name:
+                raise ValueError("Pet Name cannot be empty.")
+            apt_id = self.generate_appointment_id()
+        else:
+            apt_id = str(appointment_id_or_pet_name).strip()
+            if not apt_id:
+                raise ValueError("Appointment ID cannot be empty.")
+            clean_pet_name = str(pet_name).strip()
+            if not clean_pet_name:
+                raise ValueError("Pet Name cannot be empty.")
 
     def schedule_appointment(self, pet_name):
         clean_pet_name = str(pet_name).strip()
@@ -173,6 +218,7 @@ class ClinicDatabase:
         self._appointments.clear()
         self._owner_counter = itertools.count(1)
         self._pet_counter = itertools.count(1)
+        self._apt_counter = itertools.count(1)
         self._apt_counter = itertools.count(1)
         if os.path.exists(self._storage_file):
             os.remove(self._storage_file)
